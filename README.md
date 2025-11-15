@@ -154,18 +154,31 @@ RETURNING *
 
 This ensures only one worker gets the job.
 
-Summary
+📝 Summary
 
-QueueCTL demonstrates:
+QueueCTL is a fully functional, production-style background job processing system built entirely in Node.js.
+It showcases strong engineering principles through:
 
-Process management
+🔧 Process Management
 
-Concurrency control
+Efficient orchestration of isolated worker processes that execute jobs independently and support graceful shutdowns.
 
-Persistent queuing
+⚙️ Concurrency Control
 
-CLI engineering
+Multiple workers process jobs in parallel without race conditions, ensuring safe, locked, one-at-a-time execution.
 
-Error handling
+🗂 Persistent Queuing
 
-Fault tolerance
+All jobs, states, retries, errors, and configuration are stored in SQLite, providing durability across restarts.
+
+💻 CLI Engineering
+
+A clean and powerful command-line interface (queuectl) enables full system management — enqueueing jobs, starting workers, inspecting status, managing DLQ, and configuring settings.
+
+🚨 Error Handling
+
+Robust detection of failures using process exit codes, with full logging, structured error messages, and retry tracking.
+
+🔁 Fault Tolerance
+
+Automatic exponential-backoff retry mechanism and a Dead Letter Queue (DLQ) ensure system resilience even when tasks repeatedly fail.
