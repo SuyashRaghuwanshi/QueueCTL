@@ -169,18 +169,3 @@ CLI engineering
 Error handling
 
 Fault tolerance
-
-
----
-
-# ⭐ 6. GITHUB PUSH INSTRUCTIONS
-
-Inside project:
-
-```bash
-git init
-git add .
-git commit -m "QueueCTL: CLI, worker, DLQ, retries, design docs"
-git branch -M main
-git remote add origin https://github.com/<your-username>/queuectl.git
-git push -u origin main
