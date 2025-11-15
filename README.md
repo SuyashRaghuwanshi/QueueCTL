@@ -1,184 +1,194 @@
 🚀 QueueCTL – Background Job Queue System
 
-A production-grade CLI-based background job queue built with:
 
-Node.js
 
-SQLite (better-sqlite3)
 
-Multiple Worker Processes
 
-Retry + Exponential Backoff
+
+A production-grade CLI-based background job queue system built using Node.js and SQLite, supporting:
+
+Multiple worker processes
+
+Atomic job locking (safe concurrency)
+
+Exponential backoff retries
 
 Dead Letter Queue (DLQ)
 
-CLI Interface
+Persistent queue storage
+
+Fully featured CLI tool (queuectl)
+
+Cross-platform support (Windows + Linux/Mac)
+
+Beautiful colored logs + human-readable timestamps
 
 📦 Features
+🔧 Core Functionality
 
-CLI tool (queuectl)
-
-Enqueue jobs that run OS-level commands
-
-Multiple workers in parallel
-
-Atomic job locking (no duplicate execution)
-
-Retry mechanism with exponential backoff
-
-Persistent storage via SQLite
-
-Dead Letter Queue for permanently failed jobs
-
-Configuration via CLI (max_retries, etc.)
-
-Graceful shutdown of workers
-
-Colored logs + readable timestamps
+✔ Enqueue jobs that execute OS-level commands
+✔ Multiple workers run in parallel
+✔ No duplicate execution (atomic SQL locking)
+✔ Exponential backoff retry logic
+✔ Jobs persist across restarts (SQLite)
+✔ Dead Letter Queue for permanently failed jobs
+✔ Configuration system (max retries, etc.)
+✔ Graceful worker shutdown
+✔ Clean CLI interface built with commander
+✔ Colorful, readable logs and timestamps
 
 🏗 Architecture Overview
+ Producer (CLI)
+       │
+       ▼
+ SQLite Database  ← Persistent storage (WAL mode)
+       │
+       ▼
+ Workers → execute jobs → retry → DLQ
 
-See design.md for full explanation.
 
-Producer (CLI)
-      │
-      ▼
- SQLite DB  ← persistent + WAL mode
-      │
-      ▼
- Workers → execute jobs + retry + DLQ
+See design.md for the full architecture breakdown.
+
+📂 Project Structure
+queuectl/
+ ├── bin/
+ │   ├── queuectl.js          # CLI entrypoint
+ │   └── queuectl.cmd         # Windows support
+ ├── src/
+ │   ├── cli/
+ │   │    └── commands.js
+ │   ├── config/
+ │   │    └── config.service.js
+ │   ├── db/
+ │   │    └── database.js
+ │   ├── jobs/
+ │   │    ├── job.model.js
+ │   │    ├── job.service.js
+ │   │    └── job.types.js
+ │   ├── utils/
+ │   │    ├── exec.util.js
+ │   │    └── logger.js
+ │   └── workers/
+ │        ├── worker.js
+ │        └── worker.manager.js
+ ├── queue.db
+ ├── test.ps1                 # Windows test script
+ ├── test.sh                  # Linux/Mac test script
+ ├── package.json
+ ├── README.md
+ └── design.md
 
 💻 Installation
+1️⃣ Install dependencies
 npm install
+
+2️⃣ Link CLI tool globally
 npm link
 
 
-Windows users also get:
+Windows will also generate:
 
 queuectl.cmd
 
-▶ Usage
-Start Workers
-queuectl worker:start --count 2
-
-Enqueue Jobs
+⚡ Quick Start
+queuectl worker start --count 1
 queuectl enqueue echo "Hello Queue"
 queuectl enqueue "exit 1"
-queuectl enqueue "ping 127.0.0.1 -n 5 > nul"
-
-List Jobs
 queuectl list
+
+▶ Usage Guide
+🎯 Start Worker Processes
+queuectl worker start --count 2
+
+📨 Enqueue Jobs
+queuectl enqueue echo "Hello Queue"
+queuectl enqueue "exit 1"
+queuectl enqueue "ping 127.0.0.1 -n 5 > nul"   # Windows
+
+📋 List Jobs
+queuectl list
+queuectl list --state pending
 queuectl list --state completed
 queuectl list --state dead
 
-Configuration
-queuectl config:set max_retries 5
-queuectl config:get max_retries
+⚙️ Configuration
+queuectl config set max_retries 5
+queuectl config get max_retries
 
-Dead Letter Queue
-queuectl dlq:list
-queuectl dlq:retry <job-id>
+🪦 Dead Letter Queue
+queuectl dlq list
+queuectl dlq retry <job-id>
 
 🧪 Testing
-Windows
+🪟 Windows
+
+Before running PowerShell scripts:
+
+Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned
+
+
+Run the test:
+
 ./test.ps1
 
-Linux / Mac
+🐧 Linux / Mac
+chmod +x test.sh
 ./test.sh
 
-📘 design.md
-Create this file:
 
-design.md
+Both scripts validate:
 
-# QueueCTL – System Design
+✔ Workers start
+✔ Success + failing jobs enqueue
+✔ Retries occur with backoff
+✔ Jobs move to DLQ
+✔ DLQ listing works
 
-## Overview
-QueueCTL is a minimal background job queue system implemented using Node.js + SQLite.
+📘 design.md (Included)
 
-### Components
-- **CLI (Producer):** Enqueues jobs, manages workers, config, DLQ.
-- **Database (Broker):** Stores jobs, ensures persistence, prevents duplicates via locking.
-- **Workers (Consumers):** Poll for jobs, execute commands, update states.
+Your repository also includes a full architectural design document, covering:
 
----
+Component-level design
 
-## Job Lifecycle
+Job lifecycle
 
-1. `pending` → waiting to be executed
-2. Worker pulls job atomically via UPDATE…RETURNING
-3. `processing` → worker running job
-4. Success → `completed`
-5. Failure → retry or `dead`
-6. Dead jobs moved to DLQ
+Retry algorithm
 
----
+SQLite concurrency model
 
-## Retry & Backoff
+DLQ mechanism
 
-Backoff formula:
-
-
-
-delay = 2 ^ attempts
-
-
-Example:
-- 2s → 4s → 8s → 16s → DLQ
-
----
-
-## Persistence
-
-SQLite with WAL mode:
-- Safe concurrency
-- Crash-resilient
-- Fast local file storage
-
----
-
-## Concurrency
-
-Workers claim jobs using:
-
-```sql
-UPDATE jobs
-SET state='processing'
-WHERE id = (
-  SELECT id FROM jobs
-  WHERE state='pending'
-  LIMIT 1
-)
-RETURNING *
-
-
-This ensures only one worker gets the job.
+Worker polling strategy
 
 📝 Summary
 
-QueueCTL is a fully functional, production-style background job processing system built entirely in Node.js.
-It showcases strong engineering principles through:
+QueueCTL is a fully functional background job queue system demonstrating real-world backend engineering concepts:
 
 🔧 Process Management
 
-Efficient orchestration of isolated worker processes that execute jobs independently and support graceful shutdowns.
+Efficient worker orchestration with graceful shutdowns.
 
 ⚙️ Concurrency Control
 
-Multiple workers process jobs in parallel without race conditions, ensuring safe, locked, one-at-a-time execution.
+Multiple workers run safely using atomic SQL locking.
 
 🗂 Persistent Queuing
 
-All jobs, states, retries, errors, and configuration are stored in SQLite, providing durability across restarts.
+All jobs, retries, errors, and config stored reliably in SQLite.
 
 💻 CLI Engineering
 
-A clean and powerful command-line interface (queuectl) enables full system management — enqueueing jobs, starting workers, inspecting status, managing DLQ, and configuring settings.
+A professional CLI that manages the entire job ecosystem.
 
 🚨 Error Handling
 
-Robust detection of failures using process exit codes, with full logging, structured error messages, and retry tracking.
+Exit-code based failure detection with structured logs.
 
 🔁 Fault Tolerance
 
-Automatic exponential-backoff retry mechanism and a Dead Letter Queue (DLQ) ensure system resilience even when tasks repeatedly fail.
+Exponential-backoff retrying and DLQ for resilient execution.
+
+🏁 Conclusion
+
+QueueCTL shows how to build a fault-tolerant, persistent, multi-worker background job system from scratch using Node.js.
+It demonstrates strong backend fundamentals including concurrency, persistence, retries, worker management, and CLI tooling — making it a complete, production-grade engineering exercise.
